@@ -91,11 +91,14 @@ function init() {
 		1, // near clipping plane
 		1000 // far clipping plane
 	);
-
-	camera.position.z = 40;
-	camera.position.x = 25;
-	camera.position.y = 25;
-	camera.zoom = 0.25;
+	camera.position.x = 8.65;
+	camera.position.y = 13.97;
+	camera.position.z = 24.76;
+	camera.rotationAutoUpdate = false;
+	camera.rotation.x = -0.306;
+	camera.rotation.y = 0.324;
+	camera.rotation.z = 0.1004;
+	camera.updateProjectionMatrix();
 
 	var folder3 = gui.addFolder('camera');
 	folder3.add(camera, 'zoom', -10, 10);
@@ -112,6 +115,7 @@ function init() {
 	var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	controls.minPolarAngle = 0; // radians
 	controls.maxPolarAngle = Math.PI / 2 - 0.01; // radians
+	controls.target = new THREE.Vector3(0, 6, 0);
 
 	var folder1 = gui.addFolder('light');
 	folder1.add(myLight.position, 'x', 0, 360);
@@ -121,8 +125,6 @@ function init() {
 	var folder2 = gui.addFolder('floor');
 	folder2.add(planeMaterial, 'roughness', 0, 1);
 	folder2.add(planeMaterial, 'metalness', 0, 1);
-
-
 
 	update(renderer, scene, camera, controls, clock);
 
@@ -221,7 +223,7 @@ function getMaterial(type, color) {
 
 	return selectedMaterial;
 }
-
+var myCamera;
 function update(renderer, scene, camera, controls, clock) {
 	renderer.render(scene, camera);
 	controls.update();
@@ -231,6 +233,9 @@ function update(renderer, scene, camera, controls, clock) {
 	requestAnimationFrame(function() {
 		update(renderer, scene, camera, controls, clock);
 	});
+
+	myCamera = camera;
+
 }
 
 var scene = init();
