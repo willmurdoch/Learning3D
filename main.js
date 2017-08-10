@@ -1,8 +1,13 @@
+var camera, scene, renderer, objects = [], raycaster, mouse;
 function init() {
 	// scene
-	var scene = new THREE.Scene();
+	scene = new THREE.Scene();
 	var gui = new dat.GUI();
 	var clock = new THREE.Clock();
+
+	var enableFog = true;
+	if (enableFog)
+		scene.fog = new THREE.FogExp2('rgb(0, 0, 0)', 0.005);
 
 	scene.background = new THREE.Color('#000');
 
@@ -21,7 +26,6 @@ function init() {
 		path + 'pz' + format, path + 'nz' + format
 	];
 	var reflectionCube = new THREE.CubeTextureLoader().load(urls);
-	reflectionCube.format = THREE.RGBFormat;
 
 	//Add floor
 	var planeMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
@@ -35,9 +39,9 @@ function init() {
 	planeMaterial.bumpMap = planeLoader.load('assets/textures/metalFloor.jpg');
 	planeMaterial.roughnessMap = planeLoader.load('assets/textures/metalFloor.jpg');
 	planeMaterial.envMap = reflectionCube;
-	planeMaterial.roughness = 1;
-	planeMaterial.metalness = 0.49;
-	planeMaterial.bumpScale = 0.25;
+	planeMaterial.roughness = 0.7;
+	planeMaterial.metalness = 0.2;
+	planeMaterial.bumpScale = 0.05;
 
 	//Floor texture mapping
 	var maps = ['map', 'bumpMap'];
@@ -48,11 +52,26 @@ function init() {
 		texture.repeat.set(85, 85);
 	});
 
+	//Camera
+	camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000);
+	camera.position.x = 8.65;
+	camera.position.y = 13.97;
+	camera.position.z = 24.76;
+
+	//Renderer
+	renderer = new THREE.WebGLRenderer();
+	renderer.shadowMap.enabled = true;
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.setClearColor('rgb(220, 220, 220)');
+	document.getElementById('webgl').appendChild(renderer.domElement);
+
 	//Load external geometry
 	var loader = new THREE.OBJLoader();
 	var textureLoader = new THREE.TextureLoader();
+
 	loader.load('assets/models/r2d2/r2-d2.obj', function (object) {
 		var colorMap = textureLoader.load('assets/models/r2d2/R2D2_Diffuse.jpg');
+		var reflectionMap = textureLoader.load('assets/models/r2d2/R2D2_Reflection.jpg');
 		var faceMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
 
 		object.traverse(function(child) {
@@ -75,29 +94,47 @@ function init() {
 		object.scale.y = 0.1;
 		object.scale.z = 0.1;
 		object.name = 'r2';
+		objects.push(object);
 		scene.add(object);
 	});
 
-	// add geometry to the scene
+	//Bindings
+	raycaster = new THREE.Raycaster();
+	mouse = new THREE.Vector2();
+	document.addEventListener('mousedown', onDocumentClick, false);
+	document.addEventListener('touchend', onDocumentTouchEnd, false);
+
+	function onDocumentTouchEnd(event) {
+		event.preventDefault();
+		event.clientX = event.touches[0].clientX;
+		event.clientY = event.touches[0].clientY;
+		onDocumentClick(event);
+	}
+	function onDocumentClick(event) {
+		event.preventDefault();
+		mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+		mouse.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+		raycaster.setFromCamera(mouse, camera);
+		var intersects = raycaster.intersectObjects(objects);
+		if(intersects.length > 0) {
+			console.log('yo');
+			// new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
+			// 	object.position.y = this.val;
+			// }).start();
+			// new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
+			// 	object.position.y = this.val;
+			// }).start();
+		}
+		else{
+			console.log('no');
+		}
+	}
+
+
+
+	//Add geometry to the scene
 	scene.add(plane);
 	scene.add(myLight);
-
-	var enableFog = true;
-	if (enableFog)
-		scene.fog = new THREE.FogExp2('rgb(0, 0, 0)', 0.005);
-
-	// camera
-	var camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000);
-	camera.position.x = 8.65;
-	camera.position.y = 13.97;
-	camera.position.z = 24.76;
-
-	// renderer
-	var renderer = new THREE.WebGLRenderer();
-	renderer.shadowMap.enabled = true;
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	renderer.setClearColor('rgb(220, 220, 220)');
-	document.getElementById('webgl').appendChild(renderer.domElement);
 
 	// controls
 	var controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -123,6 +160,7 @@ function init() {
 	  camera.updateProjectionMatrix();
 	  renderer.setSize( window.innerWidth, window.innerHeight );
 	}
+
 	//Return initial state
 	return scene;
 }
@@ -135,8 +173,8 @@ function getSpotLight(intensity, color) {
 	var shadowMapSize = 550;
 
 	//Set up shadow properties for the light
-	light.shadow.mapSize.width = 2048;  // default: 512
-	light.shadow.mapSize.height = 2048; // default: 512
+	light.shadow.mapSize.width = 4096;  // default: 512
+	light.shadow.mapSize.height = 4096; // default: 512
 	light.shadow.bias = 0.001;
 
 	light.shadow.camera.left = -shadowMapSize;
@@ -150,12 +188,12 @@ function getSpotLight(intensity, color) {
 function getDirectionalLight() {
 	var light = new THREE.myLight(0xffffff, 1.5);
 	light.castShadow = true;
-	var shadowMapSize = 50;
+	var shadowMapSize = 100;
 
 	//Set up shadow properties for the light
 	light.shadow.mapSize.width = 4096;
 	light.shadow.mapSize.height = 4096;
-	light.shadow.bias = 0.05;
+	light.shadow.bias = 0.0001;
 
 	//Adjust shadow threshold
 	light.shadow.camera.left = -shadowMapSize;
@@ -217,6 +255,8 @@ function update(renderer, scene, camera, controls, clock) {
 	renderer.render(scene, camera);
 	controls.update();
 	var timeElapsed = clock.getElapsedTime();
+
+	TWEEN.update();
 
 	requestAnimationFrame(function() {
 		update(renderer, scene, camera, controls, clock);
