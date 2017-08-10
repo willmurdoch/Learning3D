@@ -6,31 +6,8 @@ function init() {
 
 	scene.background = new THREE.Color('#000');
 
-	// add geometry
+	//Add lighting
 	var myLight = getSpotLight(1, 'rgb(255, 255, 255)');
-
-	var planeMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
-	var plane = getPlane(planeMaterial, 1030);
-	plane.name = 'plane-1';
-
-	var planeLoader = new THREE.TextureLoader();
-	planeMaterial.map = planeLoader.load('assets/textures/metalFloor.jpg');
-	planeMaterial.bumpMap = planeLoader.load('assets/textures/metalFloor.jpg');
-	planeMaterial.roughnessMap = planeLoader.load('assets/textures/metalFloor.jpg');
-	planeMaterial.roughness = 1;
-	planeMaterial.metalness = 0.49;
-	planeMaterial.bumpScale = 0.25;
-
-	var maps = ['map', 'bumpMap'];
-	maps.forEach(function(mapName) {
-		var texture = planeMaterial[mapName];
-		texture.wrapS = THREE.RepeatWrapping;
-		texture.wrapT = THREE.RepeatWrapping;
-		texture.repeat.set(85, 85);
-	});
-
-	// manipulate geometry
-	plane.rotation.x = Math.PI/2;
 	myLight.position.x = 0;
 	myLight.position.y = 29;
 	myLight.position.z = 41;
@@ -38,13 +15,40 @@ function init() {
 	// load the environment map
 	var path = 'assets/cubemap/';
 	var format = '.jpg';
-	var fileNames = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
+	var urls = [
+		path + 'px' + format, path + 'nx' + format,
+		path + 'py' + format, path + 'ny' + format,
+		path + 'pz' + format, path + 'nz' + format
+	];
+	var reflectionCube = new THREE.CubeTextureLoader().load(urls);
+	reflectionCube.format = THREE.RGBFormat;
 
-	var reflectionCube = new THREE.CubeTextureLoader().load(fileNames.map(function(fileName) {
-		return path + fileName + format;
-	}));
+	//Add floor
+	var planeMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
+	var plane = getPlane(planeMaterial, 1030);
+	plane.name = 'plane-1';
+	plane.rotation.x = Math.PI/2;
 
-	// load external geometry
+	//Floor textures
+	var planeLoader = new THREE.TextureLoader();
+	planeMaterial.map = planeLoader.load('assets/textures/metalFloor.jpg');
+	planeMaterial.bumpMap = planeLoader.load('assets/textures/metalFloor.jpg');
+	planeMaterial.roughnessMap = planeLoader.load('assets/textures/metalFloor.jpg');
+	planeMaterial.envMap = reflectionCube;
+	planeMaterial.roughness = 1;
+	planeMaterial.metalness = 0.49;
+	planeMaterial.bumpScale = 0.25;
+
+	//Floor texture mapping
+	var maps = ['map', 'bumpMap'];
+	maps.forEach(function(mapName){
+		var texture = planeMaterial[mapName];
+		texture.wrapS = THREE.RepeatWrapping;
+		texture.wrapT = THREE.RepeatWrapping;
+		texture.repeat.set(85, 85);
+	});
+
+	//Load external geometry
 	var loader = new THREE.OBJLoader();
 	var textureLoader = new THREE.TextureLoader();
 	loader.load('assets/models/r2d2/r2-d2.obj', function (object) {
@@ -56,10 +60,12 @@ function init() {
 				child.material = faceMaterial;
 				child.castShadow = true;
 				faceMaterial.roughness = 0.28;
+				faceMaterial.envMap = reflectionCube;
 				faceMaterial.map = colorMap;
 				faceMaterial.metalness = 0.15;
 				faceMaterial.bumpScale = 0.175;
 
+				//Controls for imported model
 				var folder3 = gui.addFolder('R2D2');
 				folder3.add(faceMaterial, 'roughness', 0, 1);
 				folder3.add(faceMaterial, 'metalness', 0, 1);
@@ -72,10 +78,6 @@ function init() {
 		scene.add(object);
 	});
 
-
-	// var r2 = scene.getObjectByName('r2');
-	// camera.lookAt(r2);
-
 	// add geometry to the scene
 	scene.add(plane);
 	scene.add(myLight);
@@ -85,24 +87,10 @@ function init() {
 		scene.fog = new THREE.FogExp2('rgb(0, 0, 0)', 0.005);
 
 	// camera
-	var camera = new THREE.PerspectiveCamera(
-		45, // field of view
-		window.innerWidth / window.innerHeight, // aspect ratio
-		1, // near clipping plane
-		1000 // far clipping plane
-	);
+	var camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000);
 	camera.position.x = 8.65;
 	camera.position.y = 13.97;
 	camera.position.z = 24.76;
-	camera.rotationAutoUpdate = false;
-	camera.rotation.x = -0.306;
-	camera.rotation.y = 0.324;
-	camera.rotation.z = 0.1004;
-	camera.updateProjectionMatrix();
-
-	var folder3 = gui.addFolder('camera');
-	folder3.add(camera, 'zoom', -10, 10);
-
 
 	// renderer
 	var renderer = new THREE.WebGLRenderer();
@@ -115,7 +103,7 @@ function init() {
 	var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	controls.minPolarAngle = 0; // radians
 	controls.maxPolarAngle = Math.PI / 2 - 0.01; // radians
-	controls.target = new THREE.Vector3(0, 6, 0);
+	controls.target = new THREE.Vector3(0, 7, 0); //rotate camera
 
 	var folder1 = gui.addFolder('light');
 	folder1.add(myLight.position, 'x', 0, 360);
@@ -128,13 +116,14 @@ function init() {
 
 	update(renderer, scene, camera, controls, clock);
 
+	//Resize canvas for responsiveness
 	window.addEventListener('resize', onWindowResize, false);
 	function onWindowResize(){
 	  camera.aspect = window.innerWidth / window.innerHeight;
 	  camera.updateProjectionMatrix();
 	  renderer.setSize( window.innerWidth, window.innerHeight );
 	}
-
+	//Return initial state
 	return scene;
 }
 
@@ -227,7 +216,6 @@ var myCamera;
 function update(renderer, scene, camera, controls, clock) {
 	renderer.render(scene, camera);
 	controls.update();
-
 	var timeElapsed = clock.getElapsedTime();
 
 	requestAnimationFrame(function() {
@@ -235,7 +223,6 @@ function update(renderer, scene, camera, controls, clock) {
 	});
 
 	myCamera = camera;
-
 }
 
 var scene = init();
