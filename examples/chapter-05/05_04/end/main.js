@@ -81,9 +81,8 @@ function init() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.shadowMap.enabled = true;
 	document.getElementById('webgl').appendChild(renderer.domElement);
-	
+
 	var controls = new THREE.OrbitControls( camera, renderer.domElement );
-	
 	update(renderer, scene, camera, controls);
 
 	return scene;
@@ -116,7 +115,7 @@ function getMaterial(type, color) {
 		case 'standard':
 			selectedMaterial = new THREE.MeshStandardMaterial(materialOptions);
 			break;
-		default: 
+		default:
 			selectedMaterial = new THREE.MeshBasicMaterial(materialOptions);
 			break;
 	}

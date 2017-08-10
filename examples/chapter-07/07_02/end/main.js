@@ -88,7 +88,7 @@ function update(renderer, scene, camera, controls) {
 		}
 	});
 	particleSystem.geometry.verticesNeedUpdate = true;
-	
+
 	requestAnimationFrame(function() {
 		update(renderer, scene, camera, controls);
 	});
