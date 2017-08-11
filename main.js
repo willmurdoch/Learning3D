@@ -1,4 +1,4 @@
-var camera, scene, renderer, objects = [], raycaster, mouse;
+var camera, scene, renderer, objects = [];
 function init() {
 	// scene
 	scene = new THREE.Scene();
@@ -99,37 +99,50 @@ function init() {
 	});
 
 	//Bindings
-	raycaster = new THREE.Raycaster();
-	mouse = new THREE.Vector2();
-	document.addEventListener('mousedown', onDocumentClick, false);
-	document.addEventListener('touchend', onDocumentTouchEnd, false);
+	function bindElem(target, getParent, anim){
+		var raycaster = new THREE.Raycaster();
+		var mouse = new THREE.Vector2();
 
-	function onDocumentTouchEnd(event) {
-		event.preventDefault();
-		event.clientX = event.touches[0].clientX;
-		event.clientY = event.touches[0].clientY;
-		onDocumentClick(event);
-	}
-	function onDocumentClick(event) {
-		event.preventDefault();
-		mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-		mouse.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-		raycaster.setFromCamera(mouse, camera);
-		var intersects = raycaster.intersectObjects(objects);
-		if(intersects.length > 0) {
-			console.log('yo');
-			// new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
-			// 	object.position.y = this.val;
-			// }).start();
-			// new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
-			// 	object.position.y = this.val;
-			// }).start();
-		}
-		else{
-			console.log('no');
-		}
-	}
+		document.addEventListener('click', objClick, false);
+		document.addEventListener('touchstart', objTouch, false);
 
+		function objTouch(e) {
+			e.preventDefault();
+			e.clientX = e.touches[0].clientX;
+			e.clientY = e.touches[0].clientY;
+			objClick(e);
+		}
+		function objClick(e) {
+			e.preventDefault();
+			mouse.x = (e.clientX / renderer.domElement.clientWidth) * 2 - 1;
+			mouse.y = - (e.clientY / renderer.domElement.clientHeight) * 2 + 1;
+			raycaster.setFromCamera(mouse, camera);
+			var intersects = raycaster.intersectObjects(scene.children, true);
+			if(intersects.length > 0) {
+				for(var i = 0; i < intersects.length; i++){
+			    var intersection = intersects[i],
+					obj = [];
+					if(getParent == true && intersection.object.parent.name == target){
+						obj = intersection.object.parent;
+						anim();
+					}
+					else if(intersection.object.name == target){
+						obj = intersection.object;
+						anim();
+					}
+			  }
+			}
+		}
+	}
+	bindElem('r2', true, function(){
+		var animTarget = scene.getObjectByName('r2');
+		new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
+			animTarget.position.y = this.val;
+		}).start();
+		new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
+			animTarget.position.y = this.val;
+		}).start();
+	});
 
 
 	//Add geometry to the scene
