@@ -153,8 +153,11 @@ function update(renderer, scene, camera, controls) {
 }
 
 //Start everything up and apply bindings
-var scene = init();
+var scene = init(), audio;
 bindElem('r2', true, function(){
+	audio = new Audio('assets/sound/r2.mp3');
+	audio.volume = 0.1;
+	audio.play();
 	var animTarget = scene.getObjectByName('r2');
 	new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
 		animTarget.position.y = this.val;
