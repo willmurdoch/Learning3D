@@ -40,11 +40,6 @@ function init() {
 	var r2Assets = { model: 'assets/models/r2d2/r2-d2.obj', texture: 'assets/models/r2d2/R2D2_Diffuse.jpg' }
 	importObj('r2', r2Assets, r2Props, r2Transforms);
 
-	var manProps = { envMap: reflectionCube, roughness: 0.8, metalness: 0 };
-	var manTransforms = { scale: 0.15, posX: 9, posY: 0, posZ: 0 }
-	var manAssets = { model: 'assets/models/manscan/manscan.obj', texture: 'assets/models/manscan/manscan_diffuse.jpg', bump: 'assets/models/manscan/manscan_bump.jpg' }
-	importObj('man', manAssets, manProps, manTransforms);
-
 	//Floor texture mapping & output
 	var maps = ['map', 'bumpMap'];
 	maps.forEach(function(mapName){
@@ -152,10 +147,13 @@ function update(renderer, scene, camera, controls) {
 
 //Start everything up and apply bindings
 var scene = init(), audio;
+var r2Audio = new Audio('assets/sound/r2.mp3');
+r2Audio.volume = 0.1;
 bindElem('r2', true, function(){
-	audio = new Audio('assets/sound/r2.mp3');
-	audio.volume = 0.1;
-	audio.play();
+	r2Audio.play();
+	setTimeout(function(){
+		audio.remove();
+	}, 4000);
 	var animTarget = scene.getObjectByName('r2');
 	new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
 		animTarget.position.y = this.val;
@@ -165,16 +163,4 @@ bindElem('r2', true, function(){
 	}).start();
 	document.querySelector('body').style.background = 'black';
 	scene.fog = new THREE.FogExp2('rgb(0, 0, 0)', 0.005);
-});
-
-bindElem('man', true, function(){
-	var animTarget = scene.getObjectByName('man');
-	new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
-		animTarget.position.y = this.val;
-	}).start();
-	new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
-		animTarget.position.y = this.val;
-	}).start();
-	document.querySelector('body').style.background = '#FFF';
-	scene.fog = new THREE.FogExp2('rgb(255, 255, 255)', 0.005);
 });
