@@ -98,53 +98,6 @@ function init() {
 		scene.add(object);
 	});
 
-	//Bindings
-	function bindElem(target, getParent, anim){
-		var raycaster = new THREE.Raycaster();
-		var mouse = new THREE.Vector2();
-
-		document.addEventListener('click', objClick, false);
-		document.addEventListener('touchstart', objTouch, false);
-
-		function objTouch(e) {
-			e.preventDefault();
-			e.clientX = e.touches[0].clientX;
-			e.clientY = e.touches[0].clientY;
-			objClick(e);
-		}
-		function objClick(e) {
-			e.preventDefault();
-			mouse.x = (e.clientX / renderer.domElement.clientWidth) * 2 - 1;
-			mouse.y = - (e.clientY / renderer.domElement.clientHeight) * 2 + 1;
-			raycaster.setFromCamera(mouse, camera);
-			var intersects = raycaster.intersectObjects(scene.children, true);
-			if(intersects.length > 0) {
-				for(var i = 0; i < intersects.length; i++){
-			    var intersection = intersects[i],
-					obj = [];
-					if(getParent == true && intersection.object.parent.name == target){
-						obj = intersection.object.parent;
-						anim();
-					}
-					else if(intersection.object.name == target){
-						obj = intersection.object;
-						anim();
-					}
-			  }
-			}
-		}
-	}
-	bindElem('r2', true, function(){
-		var animTarget = scene.getObjectByName('r2');
-		new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
-			animTarget.position.y = this.val;
-		}).start();
-		new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
-			animTarget.position.y = this.val;
-		}).start();
-	});
-
-
 	//Add geometry to the scene
 	scene.add(plane);
 	scene.add(myLight);
@@ -164,7 +117,7 @@ function init() {
 	folder2.add(planeMaterial, 'roughness', 0, 1);
 	folder2.add(planeMaterial, 'metalness', 0, 1);
 
-	update(renderer, scene, camera, controls, clock);
+	update(renderer, scene, camera, controls);
 
 	//Resize canvas for responsiveness
 	window.addEventListener('resize', onWindowResize, false);
@@ -177,6 +130,44 @@ function init() {
 	//Return initial state
 	return scene;
 }
+
+//Bindings
+function bindElem(target, getParent, animation){
+	var raycaster = new THREE.Raycaster();
+	var mouse = new THREE.Vector2();
+
+	document.addEventListener('click', objClick, false);
+	document.addEventListener('touchstart', objTouch, false);
+
+	function objTouch(e) {
+		e.preventDefault();
+		e.clientX = e.touches[0].clientX;
+		e.clientY = e.touches[0].clientY;
+		objClick(e);
+	}
+	function objClick(e) {
+		e.preventDefault();
+		mouse.x = (e.clientX / renderer.domElement.clientWidth) * 2 - 1;
+		mouse.y = - (e.clientY / renderer.domElement.clientHeight) * 2 + 1;
+		raycaster.setFromCamera(mouse, camera);
+		var intersects = raycaster.intersectObjects(scene.children, true);
+		if(intersects.length > 0) {
+			for(var i = 0; i < intersects.length; i++){
+				var intersection = intersects[i];
+				if(getParent == true && (intersection.object.parent.name == target || intersection.object.name == target)) animation();
+			}
+		}
+	}
+}
+bindElem('r2', true, function(){
+	var animTarget = scene.getObjectByName('r2');
+	new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
+		animTarget.position.y = this.val;
+	}).start();
+	new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
+		animTarget.position.y = this.val;
+	}).start();
+});
 
 function getSpotLight(intensity, color) {
 	color = color === undefined ? 'rgb(255, 255, 255)' : color;
@@ -263,19 +254,13 @@ function getMaterial(type, color) {
 
 	return selectedMaterial;
 }
-var myCamera;
-function update(renderer, scene, camera, controls, clock) {
+function update(renderer, scene, camera, controls) {
 	renderer.render(scene, camera);
 	controls.update();
-	var timeElapsed = clock.getElapsedTime();
-
 	TWEEN.update();
-
 	requestAnimationFrame(function() {
-		update(renderer, scene, camera, controls, clock);
+		update(renderer, scene, camera, controls);
 	});
-
-	myCamera = camera;
 }
 
 var scene = init();
