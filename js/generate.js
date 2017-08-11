@@ -53,19 +53,21 @@ function importObj(name, assets, properties, transforms){
 	var textureLoader = new THREE.TextureLoader();
 	loader.load(assets.model, function(object) {
 		var colorMap = textureLoader.load(assets.texture);
+    if(assets.bump !== undefined) var bumpMap = textureLoader.load(assets.bump);
 		if(assets.matType === undefined) assets.matType = 'standard';
-		var objMaterial = getMaterial(assets.matType);
+		var objMaterial = getMaterial(assets.matType, 'rgb(255, 255, 255)');
 
-		//Combine sub-objects of import into a group and give them their properties
+		//Get all meshes in imported OBJ file and apply maps/shadows
 		object.traverse(function(child){
-			if (child.name == 'Merged_Meshes'){
-				objMaterial.map = colorMap;
-				for (var key in properties){
-					objMaterial[key] = properties[key];
-				}
-				child.castShadow = true;
-				child.material = objMaterial;
-			}
+      if(child instanceof THREE.Mesh){
+        objMaterial.map = colorMap;
+        if(bumpMap !== undefined) objMaterial.bumpMap = bumpMap;
+        for (var key in properties){
+          objMaterial[key] = properties[key];
+        }
+        child.material = objMaterial;
+        child.castShadow = true;
+      }
 		});
 
 		//Adjust and store final object

@@ -1,7 +1,6 @@
-var camera, scene, renderer, reflectionCube;
+var camera, scene, renderer, reflectionCube, myLight;
 function init() {
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color('#000');
 
 	//GUI for changing properties with sliders for testing
 	var gui = new dat.GUI();
@@ -11,7 +10,7 @@ function init() {
 	if (enableFog) scene.fog = new THREE.FogExp2('rgb(0, 0, 0)', 0.005);
 
 	//Add lighting
-	var myLight = getSpotLight(1);
+	myLight = getSpotLight(1);
 	myLight.position.x = 0;
 	myLight.position.y = 29;
 	myLight.position.z = 41;
@@ -29,17 +28,22 @@ function init() {
 	//Floor textures
 	var planeMaterial = getMaterial('standard');
 	var planeLoader = new THREE.TextureLoader();
-	planeMaterial.map = planeMaterial.bumpMap = planeMaterial.roughnessMap = planeLoader.load('assets/textures/metalFloor.jpg');
-	planeMaterial.envMap = reflectionCube;
-	planeMaterial.roughness = 0.7;
-	planeMaterial.metalness = 0.2;
-	planeMaterial.bumpScale = 0.05;
+	planeMaterial.map = planeMaterial.bumpMap = planeMaterial.roughnessMap = planeLoader.load('assets/textures/sand.jpg');
+	// planeMaterial.envMap = reflectionCube;
+	// planeMaterial.roughness = 1;
+	planeMaterial.metalness = 0;
+	planeMaterial.bumpScale = 0.15;
 
 	//Import models and apply textures/transforms
 	var r2Props = { envMap: reflectionCube, roughness: 0.28, metalness: 0.1 };
 	var r2Transforms = { scale: 0.1, posX: 0, posY: 0, posZ: 0 }
 	var r2Assets = { model: 'assets/models/r2d2/r2-d2.obj', texture: 'assets/models/r2d2/R2D2_Diffuse.jpg' }
 	importObj('r2', r2Assets, r2Props, r2Transforms);
+
+	var manProps = { envMap: reflectionCube, roughness: 0.8, metalness: 0 };
+	var manTransforms = { scale: 0.15, posX: 9, posY: 0, posZ: 0 }
+	var manAssets = { model: 'assets/models/manscan/manscan.obj', texture: 'assets/models/manscan/manscan_diffuse.jpg', bump: 'assets/models/manscan/manscan_bump.jpg' }
+	importObj('man', manAssets, manProps, manTransforms);
 
 	//Floor texture mapping & output
 	var maps = ['map', 'bumpMap'];
@@ -63,10 +67,9 @@ function init() {
 	camera.position.z = 24.76;
 
 	//Set up and assign renderer
-	renderer = new THREE.WebGLRenderer();
+	renderer = new THREE.WebGLRenderer({alpha: true});
 	renderer.shadowMap.enabled = true;
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	renderer.setClearColor('rgb(220, 220, 220)');
 	document.getElementById('webgl').appendChild(renderer.domElement);
 
 	//Controls for slider-based manipulation
@@ -76,11 +79,6 @@ function init() {
 	var folder1 = gui.addFolder('light');
 	var folder1Props = ['x', 'y', 'z'];
 	addControls(folder1, myLight.position, folder1Props, 0, 360);
-
-	//Mesh controls
-	var folder2 = gui.addFolder('floor');
-	var folder2Props = ['roughness', 'metalness'];
-	addControls(folder2, planeMaterial, folder2Props, 0, 1);
 
 	//Constrain control camera so it doesn't rotate underground
 	controls.minPolarAngle = 0;
@@ -165,4 +163,18 @@ bindElem('r2', true, function(){
 	new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
 		animTarget.position.y = this.val;
 	}).start();
+	document.querySelector('body').style.background = 'black';
+	scene.fog = new THREE.FogExp2('rgb(0, 0, 0)', 0.005);
+});
+
+bindElem('man', true, function(){
+	var animTarget = scene.getObjectByName('man');
+	new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
+		animTarget.position.y = this.val;
+	}).start();
+	new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
+		animTarget.position.y = this.val;
+	}).start();
+	document.querySelector('body').style.background = '#FFF';
+	scene.fog = new THREE.FogExp2('rgb(255, 255, 255)', 0.005);
 });
