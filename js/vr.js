@@ -13,7 +13,7 @@ function init() {
 	myLight = getSpotLight(1);
 	myLight.position.x = 0;
 	myLight.position.y = 29;
-	myLight.position.z = 41;
+	myLight.position.z = 31;
 
 	//Environment map for generating image-based reflections
 	var path = 'assets/cubemap/';
@@ -53,9 +53,9 @@ function init() {
 
 	var standeeTex = new THREE.TextureLoader().load('images/standee.png');
 	var standeeMat = new THREE.MeshLambertMaterial({ map: standeeTex, color: 0xFFFFFF, transparent: true });
-	var standee = getPlane(standeeMat, 20);
+	var standee = getPlane(standeeMat, 15);
 	standee.name = 'standee';
-	standee.position.y = 10;
+	standee.position.y = 8;
 	standee.position.x = -20;
 	standee.position.z = -50;
 
@@ -118,17 +118,21 @@ function bindElem(target, getParent, animation){
 	var raycaster = new THREE.Raycaster();
 	var mouse = new THREE.Vector2();
 
-	document.addEventListener('click', objClick, false);
-	document.addEventListener('touchstart', objTouch, false);
+  //Touch detection
+  try{
+    document.createEvent("TouchEvent");
+    document.addEventListener('touchstart', objTouch, false);
+  }
+  catch(e){
+    document.addEventListener('click', objClick, false);
+  }
 
 	function objTouch(e) {
-		e.preventDefault();
 		e.clientX = e.touches[0].clientX;
 		e.clientY = e.touches[0].clientY;
 		objClick(e);
 	}
 	function objClick(e) {
-		e.preventDefault();
 		mouse.x = (e.clientX / renderer.domElement.clientWidth) * 2 - 1;
 		mouse.y = - (e.clientY / renderer.domElement.clientHeight) * 2 + 1;
 		raycaster.setFromCamera(mouse, camera);
@@ -180,10 +184,10 @@ bindElem('r2', true, function(){
 
 bindElem('standee', true, function(){
 	var animTarget = scene.getObjectByName('standee');
-	new TWEEN.Tween({val: 10}).to({val: 15}, 150).onUpdate(function(){
+	new TWEEN.Tween({val: 8}).to({val: 12}, 150).onUpdate(function(){
 		animTarget.position.y = this.val;
 	}).start();
-	new TWEEN.Tween({val: 15}).to({val: 10}, 150).delay(150).onUpdate(function(){
+	new TWEEN.Tween({val: 12}).to({val: 8}, 150).delay(150).onUpdate(function(){
 		animTarget.position.y = this.val;
 	}).start();
 })
