@@ -51,9 +51,18 @@ function init() {
 	plane.name = 'floor';
 	plane.rotation.x = Math.PI/2;
 
+	var standeeTex = new THREE.TextureLoader().load('images/standee.png');
+	var standeeMat = new THREE.MeshLambertMaterial({ map: standeeTex, color: 0xFFFFFF, transparent: true });
+	var standee = getPlane(standeeMat, 20);
+	standee.name = 'standee';
+	standee.position.y = 10;
+	standee.position.x = -20;
+	standee.position.z = -30;
+
 	//Add geometry to the scene
 	scene.add(plane);
 	scene.add(myLight);
+	scene.add(standee);
 
 	//Create and position camera
 	camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000);
@@ -76,9 +85,10 @@ function init() {
 	addControls(folder1, myLight.position, folder1Props, 0, 360);
 
 	//Constrain control camera so it doesn't rotate underground
-	controls.minPolarAngle = 0;
 	controls.maxPolarAngle = Math.PI / 2 - 0.01;
 	controls.target = new THREE.Vector3(0, 7, 0);
+	controls.minDistance = 15;
+	controls.maxDistance = 35;
 
 	//Return initial state
 	update(renderer, scene, camera, controls);
@@ -140,6 +150,9 @@ function update(renderer, scene, camera, controls) {
 	renderer.render(scene, camera);
 	controls.update();
 	TWEEN.update();
+	var standee = scene.getObjectByName('standee');
+	standee.lookAt(camera.position);
+
 	requestAnimationFrame(function() {
 		update(renderer, scene, camera, controls);
 	});
@@ -151,9 +164,6 @@ var r2Audio = new Audio('assets/sound/r2.mp3');
 r2Audio.volume = 0.1;
 bindElem('r2', true, function(){
 	r2Audio.play();
-	setTimeout(function(){
-		audio.remove();
-	}, 4000);
 	var animTarget = scene.getObjectByName('r2');
 	new TWEEN.Tween({val: 0}).to({val: 5}, 150).onUpdate(function(){
 		animTarget.position.y = this.val;
@@ -161,6 +171,14 @@ bindElem('r2', true, function(){
 	new TWEEN.Tween({val: 5}).to({val: 0}, 150).delay(150).onUpdate(function(){
 		animTarget.position.y = this.val;
 	}).start();
-	document.querySelector('body').style.background = 'black';
-	scene.fog = new THREE.FogExp2('rgb(0, 0, 0)', 0.005);
 });
+
+bindElem('standee', true, function(){
+	var animTarget = scene.getObjectByName('standee');
+	new TWEEN.Tween({val: 10}).to({val: 15}, 150).onUpdate(function(){
+		animTarget.position.y = this.val;
+	}).start();
+	new TWEEN.Tween({val: 15}).to({val: 10}, 150).delay(150).onUpdate(function(){
+		animTarget.position.y = this.val;
+	}).start();
+})
